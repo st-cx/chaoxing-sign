@@ -42,7 +42,8 @@ export default defineEventHandler(async (event) => {
     ? requestedClientId : undefined
   const input: QrSignInput = {
     uid, activityId: body.activityId, code: body.code, enc: body.enc, courseId: body.courseId,
-    location: body.location ? { latitude: body.location.latitude, longitude: body.location.longitude } : undefined,
+    location: body.location ? { latitude: body.location.latitude, longitude: body.location.longitude,
+      ...(body.location.coordinateSystem ? { coordinateSystem: body.location.coordinateSystem } : {}) } : undefined,
   }
   setHeader(event, 'Cache-Control', 'no-store')
   return ResOp.success(qrSignQueue.submit({

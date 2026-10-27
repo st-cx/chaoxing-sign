@@ -2,6 +2,9 @@
 import { defaultSetting } from '~/constants/setting'
 import { signTypeMap } from '~/constants/cx'
 import type { Setting } from '~/types/account'
+import { useLocationsStore } from '~/stores/locations'
+import { validateLocation } from '~/utils/locationLibrary'
+import { browserLocationToBaidu } from '~/utils/coordinateTransform'
 
 const props = defineProps<{
   show: boolean
@@ -16,6 +19,21 @@ const emit = defineEmits<{
 const saving = ref(false)
 const removing = ref(false)
 const accountStore = useAccountStore()
+const library = useLocationsStore()
+const ms = useMessage()
+const showLibrary = ref(false)
+const copySetting = (setting: Setting): Setting => JSON.parse(JSON.stringify(setting))
+const seed = computed(() => ({ name: form.value.location.text, address: form.value.location.text,
+  longitude: Number(form.value.location.longitude), latitude: Number(form.value.location.latitude), coordinateSystem: 'bd09' as const }))
+const locationOptions = computed(() => library.locations.map(item => ({ label: item.name, value: item.id })))
+
+function applySavedLocation(id: string) {
+  const item = library.locations.find(item => item.id === id)
+  if (!item)
+    return
+  const coordinates = browserLocationToBaidu(item)
+  form.value.location = { text: item.address || item.name, longitude: String(coordinates.longitude), latitude: String(coordinates.latitude) }
+}
 
 const show = computed({
   get() {
@@ -26,30 +44,44 @@ const show = computed({
   },
 })
 
-const form = ref<Setting>(props.setting)
+const form = ref<Setting>(copySetting(props.setting))
 
 async function handleSave() {
+  if (saving.value || removing.value)
+    return
+  const { longitude, latitude, text } = form.value.location
+  try {
+    if (!(longitude === '-1' && latitude === '-1'))
+      validateLocation({ name: text || '默认位置', address: text, longitude, latitude, coordinateSystem: 'bd09' })
+    if (!Number.isFinite(form.value.delay) || form.value.delay < 0 || form.value.delay > 10000)
+      throw new Error('签到延迟须在 0～10000 毫秒之间')
+  }
+  catch (error) { ms.error((error as Error).message); return }
   saving.value = true
-  await accountStore.updateSetting(props.uid, unref(form)).finally(() => {
-    saving.value = false
-  })
+  try {
+    await accountStore.updateSetting(props.uid, copySetting(form.value))
+    show.value = false
+  }
+  catch (error) { ms.error((error as Error).message || '保存失败，请重试') }
+  finally { saving.value = false }
 }
 
 async function handleLogout() {
+  if (saving.value || removing.value)
+    return
   removing.value = true
-  await accountStore.logout(props.uid).finally(() => {
-    removing.value = false
-  })
-  show.value = false
+  try { await accountStore.logout(props.uid); show.value = false }
+  catch (error) { ms.error((error as Error).message || '移除失败，请重试') }
+  finally { removing.value = false }
 }
 
 function handleReset() {
-  form.value = defaultSetting
+  form.value = copySetting(defaultSetting)
 }
 
 watch(show, (value) => {
   if (value)
-    form.value = props.setting
+    form.value = copySetting(props.setting)
 })
 </script>
 
@@ -64,7 +96,7 @@ watch(show, (value) => {
     class="mobile-sheet setting-sheet"
   >
     <template #header-extra>
-      <button class="icon-button" type="button" aria-label="关闭设置" @click="show = false"><Icon name="ant-design:close-circle-outlined" /></button>
+      <button class="icon-button" type="button" aria-label="关闭设置" :disabled="saving || removing" @click="show = false"><Icon name="ant-design:close-circle-outlined" /></button>
     </template>
     <n-spin :show="saving">
       <n-form
@@ -75,7 +107,7 @@ watch(show, (value) => {
         :show-feedback="false"
         size="medium"
       >
-        <n-form-item label="签到延迟" path="delay">
+        <n-form-item label="签到延迟（毫秒）" path="delay">
           <n-input-number
             v-model:value="form.delay"
             placeholder=""
@@ -85,7 +117,10 @@ watch(show, (value) => {
           />
         </n-form-item>
         <n-divider />
-        <n-form-item label="签到位置" path="location">
+        <n-form-item label="从坐标库填入默认位置">
+          <n-select :value="null" :options="locationOptions" placeholder="选择已保存的位置" filterable @update:value="applySavedLocation" />
+        </n-form-item>
+        <n-form-item label="账号默认位置（百度坐标）" path="location">
           <n-space>
             <n-input
               v-model:value="form.location.text"
@@ -143,6 +178,8 @@ watch(show, (value) => {
             </n-input>
           </n-space>
         </n-form-item>
+        <n-button secondary block :disabled="saving || removing" @click="showLibrary = true">将当前坐标保存到坐标库</n-button>
+        <p class="location-note">这里修改账号默认设置；首页「本次运行位置」单独选择，不会覆盖此设置。</p>
         <!-- <n-form-item label="拍照签到" path="photo">
         <div />
       </n-form-item> -->
@@ -159,10 +196,11 @@ watch(show, (value) => {
         </n-form-item>
         <n-form-item class="setting-actions">
           <n-space justify="end">
-            <n-button @click="handleReset">
+            <n-button :disabled="saving || removing" @click="show = false">取消</n-button>
+            <n-button :disabled="saving || removing" @click="handleReset">
               重置
             </n-button>
-            <n-button type="primary" :loading="saving" @click="handleSave">
+            <n-button type="primary" :loading="saving" :disabled="removing" @click="handleSave">
               保存
             </n-button>
           </n-space>
@@ -181,6 +219,7 @@ watch(show, (value) => {
       </n-form>
     </n-spin>
   </n-modal>
+  <LocationLibraryModal v-model:show="showLibrary" :seed="seed" />
 </template>
 
 <style scoped>

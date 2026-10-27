@@ -9,7 +9,7 @@ const theme = computed(() => {
   return colorMode.value === 'system' ? (colorMode.value ? lightTheme : darkTheme) : colorMode.value === 'light' ? lightTheme : darkTheme
 })
 
-const themeColor = ref('#e70012')
+const themeColor = computed(() => colorMode.value === 'dark' ? '#4bc8b2' : '#147d73')
 
 const themeOverrides = computed(() => {
   const theme = unref(themeColor)
@@ -21,8 +21,8 @@ const themeOverrides = computed(() => {
       primaryColorHover: lightenStr,
       primaryColorPressed: lightenStr,
       primaryColorSuppl: theme,
-      borderRadius: '14px',
-      fontSize: '16px',
+      borderRadius: '10px',
+      fontSize: '14px',
       heightMedium: '44px',
       heightLarge: '48px',
     },

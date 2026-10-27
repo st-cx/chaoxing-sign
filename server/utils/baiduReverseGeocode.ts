@@ -44,7 +44,8 @@ export function createBaiduAddressCache(reverseGeocode = baiduReverseGeocode) {
   const entries: Array<{ location: QrCoordinates; address: Promise<string> }> = []
 
   return (clientLocation: QrCoordinates, ak: string): Promise<string> => {
-    const existing = entries.find(entry => distanceMeters(entry.location, clientLocation) < MAX_ADDRESS_DISTANCE_METERS)
+    const existing = entries.find(entry => (entry.location.coordinateSystem || 'wgs84') === (clientLocation.coordinateSystem || 'wgs84')
+      && distanceMeters(entry.location, clientLocation) < MAX_ADDRESS_DISTANCE_METERS)
     if (existing)
       return existing.address
 

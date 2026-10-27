@@ -46,7 +46,7 @@ function mount(component: any, props: any = {}) {
   return instance.$.setupState
 }
 
-it('keeps the expiry message and two recovery buttons inside the original card and prevents account selection', async () => {
+it('keeps recovery and settings available on expired cards without selecting the account', async () => {
   const click = vi.fn()
   mount(AccountItem, { uid: 'cx-a', username: '13800000000', info: { realname: 'Student' }, setting: {},
     lastLoginTime: '2026-10-01', loginExpired: true, onClick: click })
@@ -54,9 +54,13 @@ it('keeps the expiry message and two recovery buttons inside the original card a
   expect(card.classList.contains('account-card-expired')).toBe(true)
   const overlay = card.querySelector('.account-expired-overlay')!
   expect(overlay.textContent).toContain('登陆状态失效，请重新登录')
-  expect([...overlay.querySelectorAll('button')].map(button => button.textContent)).toEqual(['重新登录', '尝试自动续登'])
+  expect([...overlay.querySelectorAll('button')].map(button => button.textContent)).toEqual(['重新登录', '尝试自动续登', '账号设置'])
   expect(card.querySelector('.account-actions')?.hasAttribute('inert')).toBe(true)
   card.click()
+  expect(click).not.toHaveBeenCalled()
+  ;(overlay.querySelectorAll('button')[2] as HTMLButtonElement).click()
+  await Vue.nextTick()
+  expect(instance.$.setupState.showSettingModal).toBe(true)
   expect(click).not.toHaveBeenCalled()
   ;(overlay.querySelectorAll('button')[0] as HTMLButtonElement).click()
   await Vue.nextTick()

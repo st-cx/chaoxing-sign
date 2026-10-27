@@ -68,6 +68,9 @@ const showCodeOrGestureModal = ref(false)
 
 const showSettingModal = ref(false)
 const showSignHistory = ref(false)
+const showActivityCenter = ref(false)
+const activityCenterType = ref('all')
+function openActivityCenter(type = 'all') { activityCenterType.value = type; showActivityCenter.value = true }
 
 const now = ref(Date.now())
 let recentSignExpiry: ReturnType<typeof setTimeout> | undefined
@@ -217,6 +220,8 @@ async function handleQrCodeSignSuccess(result: string) {
 
   try {
     const location = await getClientLocationForQr()
+    if (generation !== qrModalGeneration)
+      return
     const decision = await accountStore.signByQrCode(props.uid, result, doingActivity.value?.course?.courseId, undefined, location)
     if (generation === qrModalGeneration)
       applyQrDecision(decision, result, requestedActivityId)
@@ -262,7 +267,7 @@ async function handleCodeOrGestureSignSuccess(result: string) {
 
 <template>
   <n-spin :show="loading">
-    <n-card class="account-card" :class="{ 'account-card-selected': selected && !loginExpired, 'account-card-expired': loginExpired }" @click="!loginExpired && emit('click')">
+    <n-card class="account-card" role="group" :aria-label="`${info.realname} 的账号`" :tabindex="loginExpired ? -1 : 0" :class="{ 'account-card-selected': selected && !loginExpired, 'account-card-expired': loginExpired }" @click="!loginExpired && emit('click')" @keydown.enter.self.prevent="!loginExpired && emit('click')" @keydown.space.self.prevent="!loginExpired && emit('click')">
       <template #header>
         <div class="account-identity" :inert="loginExpired || undefined" :aria-hidden="loginExpired || undefined">
           <n-avatar :size="44" :src="info.avatar" round />
@@ -290,6 +295,7 @@ async function handleCodeOrGestureSignSuccess(result: string) {
         <div class="account-expired-actions">
           <n-button type="primary" :disabled="renewLoading || showReloginModal" @click="renewError = ''; showReloginModal = true">重新登录</n-button>
           <n-button secondary :loading="renewLoading" :disabled="renewLoading || showReloginModal" @click="tryRenewSession">尝试自动续登</n-button>
+          <n-button secondary :disabled="renewLoading || showReloginModal" @click="showSettingModal = true">账号设置</n-button>
         </div>
         <p v-if="renewError" class="account-renew-error" role="alert">{{ renewError }}</p>
       </div>
@@ -298,13 +304,16 @@ async function handleCodeOrGestureSignSuccess(result: string) {
         <div class="account-actions" :inert="loginExpired || undefined" :aria-hidden="loginExpired || undefined" @click.stop>
           <div class="account-action-layout">
             <n-button class="account-scan-button" type="primary" @click="qrCodeResult = null; showQrCodeModal = true"><template #icon><Icon name="mdi:qrcode-scan" /></template>扫码签到</n-button>
+            <div class="account-sign-shortcuts"><n-button secondary type="primary" @click="openActivityCenter('photo')">拍照签到</n-button><n-button secondary @click="openActivityCenter()">其他签到</n-button></div>
             <div class="account-mini-actions">
+              <NuxtLink class="account-course-link" :to="`/account/${uid}`">课程</NuxtLink>
               <n-button quaternary class="account-mini-button" @click="showSignHistory = true"><template #icon><Icon name="material-symbols:history-rounded" /></template>记录</n-button>
               <n-button quaternary class="account-mini-button" @click="showSettingModal = true"><template #icon><Icon name="material-symbols:settings-outline" /></template>设置</n-button>
             </div>
           </div>
         </div>
       </template>
+    </n-card>
       <QrCodeSignModal v-model:show="showQrCodeModal" :title="doingActivity?.course.name" :loading="qrCodeLoading" :queue-overlay="qrOverlayMode" :course-sync-available="courseSyncAvailable" :course-sync-loading="accountStore.courseSyncLoading" :course-sync-disabled="accountStore.accountSyncLoading" @sync-courses="syncFailedCourses" @success="handleQrCodeSignSuccess">
         <template #result>
           <p v-if="qrCodeResult" role="status">
@@ -313,11 +322,11 @@ async function handleCodeOrGestureSignSuccess(result: string) {
           </p>
         </template>
       </QrCodeSignModal>
-      <CodeOrGestureSignModal v-model:show="showCodeOrGestureModal" :activity="doingActivity!" :loading="loading" @success="handleCodeOrGestureSignSuccess" />
+      <CodeOrGestureSignModal v-model:show="showCodeOrGestureModal" :activity="doingActivity!" :loading="loading" @click.stop @success="handleCodeOrGestureSignSuccess" />
       <SignHistory v-model:show="showSignHistory" :uid="uid" />
+      <ActivityCenterModal v-if="showActivityCenter" v-model:show="showActivityCenter" :uid="uid" :name="info.realname" :initial-type="activityCenterType" />
       <SettingModal v-if="showSettingModal" v-model:show="showSettingModal" :uid="uid" :setting="setting" />
       <AccountLoginModal v-if="showReloginModal" v-model:show="showReloginModal" :account="reloginAccount" @success="showReloginModal = false" />
-    </n-card>
     <template #description>
       马上就好...
     </template>

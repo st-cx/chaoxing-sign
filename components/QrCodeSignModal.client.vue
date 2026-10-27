@@ -2,7 +2,7 @@
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { QrcodeCapture, QrcodeDropZone, QrcodeStream } from 'vue-qrcode-reader'
 import { createQrCodeSubmissionGuard, parseQrCodeSignLink } from '~/utils/qrCodeSign'
-import { clientLocationStatus, requestQrModalLocationOnce } from '~/utils/clientLocation.client'
+import { clientLocationStatus, requestQrModalLocationOnce, runtimeLocation } from '~/utils/clientLocation.client'
 import { qrSignScannerCovered, qrSignSubmissionAllowed, type QrSignOverlayMode } from '~/utils/qrSignOverlay'
 import { applyQrCameraZoom, currentQrCameraZoom, enableQrCameraAutofocus, qrCameraConstraints, qrCameraZoomRange, type QrCameraProfile, type QrCameraZoomRange } from '~/utils/qrScannerCamera.client'
 
@@ -500,6 +500,7 @@ function handleUpload() {
     @after-enter="handleOpen"
     @after-leave="handleClose"
   >
+    <LocationPicker compact :disabled="interactionLocked || scannerCovered" />
     <div class="qr-scan-actions mb-2">
       <n-space>
         <div class="scan-action">
@@ -548,10 +549,10 @@ function handleUpload() {
     <n-text class="scan-status" :type="errorMessage ? 'error' : 'info'">
       {{ scanStatus }}
     </n-text>
-    <n-text v-if="clientLocationStatus === 'unavailable'" class="scan-status" type="warning">
+    <n-text v-if="!runtimeLocation && clientLocationStatus === 'unavailable'" class="scan-status" type="warning">
       定位不可用；扫码将使用默认坐标，要求位置的签到可能失败。
     </n-text>
-    <n-text v-else-if="clientLocationStatus === 'loading'" class="scan-status" type="info">
+    <n-text v-else-if="!runtimeLocation && clientLocationStatus === 'loading'" class="scan-status" type="info">
       正在读取网页位置；扫码提交会等待定位结果。
     </n-text>
     <slot name="result" />

@@ -240,6 +240,20 @@ describe('QR submission endpoint', () => {
     expect(c.cx.signQrCode.mock.calls[0][4]).toBeUndefined()
   })
 
+  it('preserves saved Baidu coordinates across the API and queue without converting them twice', async () => {
+    const { cx, event } = fixture('cx-saved')
+    event.body.location = { latitude: 22.6, longitude: 113.09, coordinateSystem: 'bd09' }
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    await handler(event)
+    await vi.advanceTimersByTimeAsync(0)
+    const outgoing = cx.signQrCode.mock.calls[0][4]
+    expect(outgoing.latitude).toBeCloseTo(22.6, 8)
+    expect(outgoing.longitude).toBeCloseTo(113.09, 8)
+    const reverseUrl = new URL(vi.mocked(fetch).mock.calls[0][0] as URL)
+    expect(reverseUrl.searchParams.get('location')).toBe('22.6,113.09')
+    expect(reverseUrl.searchParams.get('coordtype')).toBe('bd09ll')
+  })
+
   it('omits position parameters when the QR activity does not request a location', async () => {
     const { cx, event } = fixture('cx-a')
     event.body.location = { latitude: 39.908823, longitude: 116.39747 }

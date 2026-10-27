@@ -1,5 +1,9 @@
 # 某星签到助手
 
+> 本地第二版增加了拍照签到中心、地图搜索/点击选点、首页常用地点卡片，并记住上次选择；保留扫码、账号、课程、设置和记录功能。操作方式、数据存储及验证边界见 [优化版说明](./docs/WORKSPACE_UPGRADE.md)。交付包可运行 `start-preview.cmd` 查看使用示例数据的交互预览。
+
+本仓库是 [TimePineapple/chaoxing-sign](https://github.com/TimePineapple/chaoxing-sign) 的改进 Fork。克隆本仓库后，可先运行 `pnpm install --frozen-lockfile`、`pnpm demo:build`、`pnpm demo:start`，在 `http://127.0.0.1:4176/` 体验示例交互，无需配置数据库。预览不会执行真实签到；正式使用仍需按下文部署。
+
 [![CI](https://img.shields.io/github/actions/workflow/status/TimePineapple/chaoxing-sign/ci.yml?branch=main&label=CI)](https://github.com/TimePineapple/chaoxing-sign/actions/workflows/ci.yml)
 [![Nuxt](https://img.shields.io/badge/Nuxt-3.14.1592-00DC82?logo=nuxt.js)](https://nuxt.com/)
 [![License](https://img.shields.io/github/license/TimePineapple/chaoxing-sign)](./LICENSE)
@@ -32,7 +36,7 @@
 ### 1. 获取项目并安装依赖
 
 ```shell
-git clone https://github.com/TimePineapple/chaoxing-sign.git
+git clone https://github.com/st-cx/chaoxing-sign.git
 cd chaoxing-sign
 pnpm install
 ```
@@ -183,7 +187,12 @@ CX_PROXY_URL=http://127.0.0.1:7890
 
 ### 定位、设置与记录
 
-- 扫码弹层会尝试读取浏览器位置。定位不可用时会使用账号设置中的默认坐标，要求位置的活动可能因此失败。
+- 首页或扫码窗口点“管理坐标库”，支持位置命名、粘贴经纬度、获取当前位置、搜索、编辑和导入导出。
+- “保存并选用”或选择框会设置本次运行位置，单账号、批量扫码与手动位置签到共用；刷新后恢复浏览器定位，保存条目仍保留。
+- 坐标来源区分百度 BD-09 与浏览器/GPS WGS-84。坐标库仅保存在当前浏览器，并按本站用户隔离；跨设备使用请导出后导入。
+- 账号设置可直接从坐标库填入默认位置，也可以把旧默认坐标存入库。编辑后须点“保存”才修改账号，取消不保存。
+
+- 未选用坐标库位置时，扫码弹层会尝试读取浏览器位置；定位不可用会保留原有缺省处理，要求位置的活动可能因此失败。
 - 点击账号卡片中的“设置”，可以调整签到延迟、地址、经纬度和允许的签到类型，也可以移除该学习通账号。
 - 经纬度可通过[百度地图拾取坐标系统](https://api.map.baidu.com/lbsapi/getpoint/index.html)查询。
 - 点击“记录”可查看本站保存的签到请求结果。它不是学习通官方记录，结果未知时仍应到官方渠道复核。

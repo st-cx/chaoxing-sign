@@ -1,6 +1,7 @@
 export interface QrCoordinates {
   latitude: number
   longitude: number
+  coordinateSystem?: 'wgs84' | 'bd09'
 }
 
 export function isQrCoordinates(value: unknown): value is QrCoordinates {
@@ -8,7 +9,8 @@ export function isQrCoordinates(value: unknown): value is QrCoordinates {
     return false
 
   const coordinates = value as Record<string, unknown>
-  return typeof coordinates.latitude === 'number'
+  return (coordinates.coordinateSystem === undefined || coordinates.coordinateSystem === 'wgs84' || coordinates.coordinateSystem === 'bd09')
+    && typeof coordinates.latitude === 'number'
     && Number.isFinite(coordinates.latitude)
     && coordinates.latitude >= -90
     && coordinates.latitude <= 90

@@ -1,5 +1,4 @@
 import { skipHydrate } from 'pinia'
-import { createDiscreteApi } from 'naive-ui'
 import { signTypeMap } from '~/constants/cx'
 import type { Body as LoginForm } from '~/server/api/cx/login.post'
 import type { Account, Activity, Course, Setting } from '~/types/account'
@@ -46,7 +45,6 @@ export const useAccountStore = defineStore('account', () => {
   const loading = ref(false)
   const accountSyncLoading = ref(false)
   const courseSyncLoading = ref(false)
-  const { message: ms } = createDiscreteApi(['message'])
 
   const { log } = useLogStore()
 
@@ -54,7 +52,7 @@ export const useAccountStore = defineStore('account', () => {
     const account = accounts.value.find(a => a.uid === uid)
 
     if (!account) {
-      ms.error('账号不存在')
+      log('账号不存在', { type: 'error' })
       throw new Error('账号不存在')
     }
 
@@ -73,8 +71,11 @@ export const useAccountStore = defineStore('account', () => {
     accountSyncLoading.value = true
     try {
       const { data } = await request('/api/cx/accounts')
+      const previousSelection = new Map(accounts.value.map(account => [account.uid, account.selected]))
       accounts.value = data as unknown as Account[]
       for (const account of accounts.value) {
+        if (previousSelection.has(account.uid))
+          account.selected = previousSelection.get(account.uid) === true
         const state = sessionStates.get(account.uid)
         if (state)
           applyAccountSession(state)
@@ -245,7 +246,7 @@ export const useAccountStore = defineStore('account', () => {
       log(`课程: ${course.name} 无签到活动`, { type: 'warning' })
     }
     else {
-      ms.success(`${course.name} 共有${data.length}个正在的签到活动`)
+      log(`${course.name} 共有${data.length}个正在的签到活动`, { type: 'success' })
       data.forEach(({ activity, result }) => {
         const signType = signTypeMap[activity.otherId] ?? '未知'
         const activityName = activity.name || signType
@@ -268,7 +269,7 @@ export const useAccountStore = defineStore('account', () => {
 
     const signType = signTypeMap[activity.otherId] ?? '未知'
     const activityName = activity.name || signType
-    log(`课程: ${course.name} 活动: ${activityName} [${signType}]结果: ${data?.result || ms}`, { type: data?.result === '签到成功' ? 'success' : 'error' })
+    log(`课程: ${course.name} 活动: ${activityName} [${signType}]结果: ${data?.result || '未返回签到结果'}`, { type: data?.result === '签到成功' ? 'success' : 'error' })
 
     return data
   }
@@ -285,7 +286,7 @@ export const useAccountStore = defineStore('account', () => {
     const { activity } = data!
     const signType = signTypeMap[activity.otherId] ?? '未知'
     const activityName = activity.name || signType
-    log(`活动: ${activityName} [${signType}]结果: ${data?.result || ms}`, { type: data?.result === '签到成功' ? 'success' : 'error' })
+    log(`活动: ${activityName} [${signType}]结果: ${data?.result || '未返回签到结果'}`, { type: data?.result === '签到成功' ? 'success' : 'error' })
 
     return data
   }
@@ -302,7 +303,7 @@ export const useAccountStore = defineStore('account', () => {
     const { activity } = data!
     const signType = signTypeMap[activity.otherId] ?? '未知'
     const activityName = activity.name || signType
-    log(`活动: ${activityName} [${signType}]结果: ${data?.result || ms}`, { type: data?.result === '签到成功' ? 'success' : 'error' })
+    log(`活动: ${activityName} [${signType}]结果: ${data?.result || '未返回签到结果'}`, { type: data?.result === '签到成功' ? 'success' : 'error' })
 
     return data
   }
@@ -369,7 +370,7 @@ export const useAccountStore = defineStore('account', () => {
       },
     })
 
-    ms.success(`${account.info.realname} 共有${data.length}个正在的签到活动`, { type: 'warning' })
+    log(`${account.info.realname} 共有${data.length}个正在的签到活动`, { type: 'warning' })
     data.forEach(({ activity, result }) => {
       const signType = signTypeMap[activity.otherId] ?? '未知'
       const activityName = activity.name || signType
@@ -418,15 +419,18 @@ export const useAccountStore = defineStore('account', () => {
   async function updateSetting(uid: string, setting: Setting) {
     const account = getAccount(uid)
 
-    const { data } = await request(`/api/cx/accounts/${uid}/update_setting`, {
+    const { code, message, data } = await request(`/api/cx/accounts/${uid}/update_setting`, {
       method: 'POST',
       body: { uid, setting },
     })
 
-    log(`${account.info.realname} 保存成功`, { type: 'success' })
+    if (code !== 200 || !data)
+      throw new Error(message || '设置保存失败，请重试')
 
     const index = accounts.value.findIndex(a => a.uid === uid)
-    accounts.value[index].setting = data!
+    if (index >= 0)
+      accounts.value[index].setting = data
+    log(`${account.info.realname} 保存成功`, { type: 'success' })
   }
 
   watch(accounts, (accounts) => {

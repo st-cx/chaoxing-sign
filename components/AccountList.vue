@@ -6,6 +6,12 @@ import { connectRecentSignEvents } from '~/utils/recentSignEvents.client'
 const accountStore = useAccountStore()
 
 const showLoginModal = ref(false)
+const search = ref('')
+const filter = ref('all')
+const visibleAccounts = computed(() => accountStore.accounts.filter((account) => {
+  const matches = `${account.info?.realname || ''} ${account.info?.siteName || ''} ${account.uid}`.toLowerCase().includes(search.value.trim().toLowerCase())
+  return matches && (filter.value === 'all' || (filter.value === 'selected' ? account.selected : account.loginExpired))
+}))
 
 async function handleSync() {
   if (accountStore.accountSyncLoading || accountStore.courseSyncLoading)
@@ -82,10 +88,16 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
+    <div class="account-filters">
+      <n-input v-model:value="search" placeholder="搜索姓名、学校或账号" clearable aria-label="搜索账号"><template #prefix><Icon name="material-symbols:search-rounded" /></template></n-input>
+      <n-select v-model:value="filter" aria-label="筛选账号" :options="[{ label: '全部账号', value: 'all' }, { label: '已选账号', value: 'selected' }, { label: '需要登录', value: 'expired' }]" />
+    </div>
+
     <ClientOnly>
       <template v-if=" accountStore.accounts?.length! > 0">
         <div class="account-stack">
-          <AccountItem v-for="account in accountStore.accounts" v-bind="pick(account, ['uid', 'username', 'info', 'lastLoginTime', 'selected', 'setting', 'loginExpired'])" :key="account.uid" :recent-sign="accountStore.recentSigns[account.uid]" @click="selectAccount(account)" />
+          <AccountItem v-for="account in visibleAccounts" v-bind="pick(account, ['uid', 'username', 'info', 'lastLoginTime', 'selected', 'setting', 'loginExpired'])" :key="account.uid" :recent-sign="accountStore.recentSigns[account.uid]" @click="selectAccount(account)" />
+          <div v-if="!visibleAccounts.length" class="empty-card"><n-empty description="没有符合条件的账号" /><n-button @click="search = ''; filter = 'all'">清除筛选</n-button></div>
           <n-button class="add-account-button" block dashed @click="showLoginModal = true">
             <template #icon><Icon name="ic:outline-add-box" /></template>
             添加账号

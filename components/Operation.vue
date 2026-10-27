@@ -17,7 +17,12 @@ const selectAccounts = toRef(accountStore, 'selectAccounts')
 const eligibleAccounts = computed(() => accounts.value.filter(account => !account.loginExpired))
 const { mode: qrOverlayMode, applyJob: applyOverlayJob, applySnapshot: applyOverlaySnapshot, reset: resetOverlay } = useQrSignOverlay(computed(() => selectAccounts.value.map(account => account.uid)))
 
-const isAllChecked = ref(false)
+const isAllChecked = computed({
+  get: () => eligibleAccounts.value.length > 0 && selectAccounts.value.length === eligibleAccounts.value.length,
+  set: (checked: boolean) => {
+    accountStore.accounts.forEach(account => { account.selected = !account.loginExpired && checked })
+  },
+})
 const indeterminate = computed(() => {
   return selectAccounts.value.length > 0 && selectAccounts.value.length < eligibleAccounts.value.length
 })
@@ -28,13 +33,6 @@ function handleCheckedChange() {
   })
 }
 
-onMounted(() => {
-  isAllChecked.value = selectAccounts.value.length === eligibleAccounts.value.length && eligibleAccounts.value.length > 0
-})
-
-watch(selectAccounts, () => {
-  isAllChecked.value = selectAccounts.value.length === eligibleAccounts.value.length && eligibleAccounts.value.length > 0
-})
 
 const loading = ref(false)
 const qrCodeLoading = ref(false)
@@ -285,6 +283,8 @@ async function retryQrSubmission(row: QrFeedback) {
   qrCodeLoading.value = true
   try {
     const location = await getClientLocationForQr()
+    if (generation !== qrModalGeneration)
+      return
     const decision = await accountStore.signByQrCode(row.uid, url, undefined, row.traceId, location)
     if (generation === qrModalGeneration)
       applyQrDecision(row, decision, url, activityId)
@@ -315,10 +315,10 @@ async function handleCodeOrGestureSignSuccess(result: string) {
     await Promise.allSettled(
       toAccounts.map(async (account) => {
         if (activity.otherId === SignTypeEnum.Code)
-          return await accountStore.signByCode(account.uid, String(activity.id), result)
+          return await accountStore.signByCode(account.uid, activity.course.courseId, String(activity.id), result)
 
         else if (activity.otherId === SignTypeEnum.Gesture)
-          return await accountStore.signByGesture(account.uid, String(activity.id), result)
+          return await accountStore.signByGesture(account.uid, activity.course.courseId, String(activity.id), result)
       }),
     )
   }
@@ -344,11 +344,10 @@ async function handleCodeOrGestureSignSuccess(result: string) {
         <span>是否为动态刷新码</span>
       </div>
       <span class="batch-selection-count">已选 <strong>{{ selectAccounts.length }}</strong> 个账号</span>
-      <span class="batch-select-label" role="button" tabindex="0" @click.stop="toggleAllChecked" @keydown.enter.stop="toggleAllChecked" @keydown.space.prevent.stop="toggleAllChecked">全选</span>
-      <n-checkbox v-model:checked="isAllChecked" :indeterminate="indeterminate" size="large" aria-label="全选" @update:checked="handleCheckedChange" />
+      <n-checkbox v-model:checked="isAllChecked" :indeterminate="indeterminate" size="large" aria-label="全选" :disabled="!eligibleAccounts.length || qrCodeLoading">全选可用账号</n-checkbox>
     </div>
     <div class="primary-actions">
-      <n-button type="primary" :disabled="qrCodeLoading" @click="openQrCodeSignModal()">
+      <n-button type="primary" :disabled="qrCodeLoading || !selectAccounts.length || accountStore.courseSyncLoading" @click="openQrCodeSignModal()">
         <template #icon><Icon name="mdi:qrcode-scan" /></template>
         批量扫码
       </n-button>

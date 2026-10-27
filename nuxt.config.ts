@@ -93,7 +93,7 @@ export default defineNuxtConfig({
     attributify: true,
     preflight: false,
   },
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/workspace.css'],
   content: {
     highlight: {
       theme: {

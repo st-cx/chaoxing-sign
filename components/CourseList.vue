@@ -11,42 +11,59 @@ const accountStore = useAccountStore()
 
 const isSyncLoading = ref(false)
 const showModal = ref(false)
+const showSignCenter = ref(false)
+const targetActivity = ref('')
+const targetCourse = ref('')
 
 const currentCourse = ref<Course>()
 const activities = ref<Activity[]>([])
 
-function syncCourse() {
+async function syncCourse() {
+  if (isSyncLoading.value)
+    return
   isSyncLoading.value = true
-  accountStore.getCourses(props.account.uid).finally(() => {
-    isSyncLoading.value = false
-  })
+  try { await accountStore.getCourses(props.account.uid) }
+  catch { /* The request layer displays the failure. */ }
+  finally { isSyncLoading.value = false }
 }
 
 async function lookActivities(course: Course) {
+  if (course.isLoadActivity)
+    return
   course.isLoadActivity = true
   currentCourse.value = course
   activities.value = []
   try {
-    activities.value = await accountStore.getActivityList(props.account.uid, course)
-    showModal.value = true
+    const result = await accountStore.getActivityList(props.account.uid, course)
+    if (currentCourse.value?.courseId === course.courseId) {
+      activities.value = result
+      showModal.value = true
+    }
   }
+  catch { /* The request layer displays the failure. */ }
   finally {
     course.isLoadActivity = false
   }
 }
 
 async function signByCourse(course: Course) {
+  if (course.isSigning)
+    return
   course.isSigning = true
   try {
     await accountStore.signByCourse(props.account.uid, course)
   }
+  catch { /* The request layer displays the failure. */ }
   finally {
     course.isSigning = false
   }
 }
 
 async function signByActivity(course: Course, activity: Activity) {
-  await accountStore.signByActivity(props.account.uid, course, activity)
+  targetActivity.value = String(activity.id)
+  targetCourse.value = String(course.courseId)
+  showModal.value = false
+  showSignCenter.value = true
 }
 </script>
 
@@ -125,6 +142,7 @@ async function signByActivity(course: Course, activity: Activity) {
       <n-empty description="暂无活动" size="small" />
     </div>
   </n-modal>
+  <ActivityCenterModal v-if="showSignCenter" v-model:show="showSignCenter" :uid="account.uid" :name="account.info.realname" :course-id="targetCourse" :activity-id="targetActivity" />
 </template>
 
 <style scoped>

@@ -6,6 +6,7 @@ import type { Got } from 'got'
 import { CookieJar } from 'tough-cookie'
 import * as cheerio from 'cheerio'
 import got from 'got'
+import { getPhotoToken } from './photo'
 import { CxProxyError, getCxProxyOptions } from './proxy'
 import { CxSessionExpiredError, isCxLoginHtml, isCxLoginUrl } from './session'
 import { cxRequestStartQueue } from '~/server/utils/cxRequestStartQueue'
@@ -549,7 +550,9 @@ export class Cx {
     return this.stuSign(query)
   }
 
-  async signPhoto(activity: CX.ActivityDetail, photo?: CX.YunPanFile) {
+  async signPhoto(activity: CX.ActivityDetail, photo?: Pick<CX.YunPanFile, 'objectId'>) {
+    if (!photo?.objectId)
+      return '请在拍照签到入口选择照片后提交'
     const query = qsStringify({
       activeId: activity.id,
       uid: this.user.uid,
@@ -812,9 +815,12 @@ export class Cx {
   }
 
   async getPhotoFile() {
-    const { body: { data } } = await this.http.get<CX.Response<CX.YunPanFile[]>>('https://pan-yz.chaoxing.com/api/getMyDirAndFiles?puid=42736002&fldid=&page=1&size=100&addrec=0&showCollect=1&_token=3d44eb8928f52b391398035f530c4155m', {})
-
-    return data.find(d => d.name === '0.png' || d.name === '0.jpg')
+    const token = await getPhotoToken(this.http)
+    const { body: { data } } = await this.http.get<CX.Response<CX.YunPanFile[]>>('https://pan-yz.chaoxing.com/api/getMyDirAndFiles', {
+      searchParams: { puid: this.user.uid, fldid: '', page: 1, size: 100, addrec: 0, showCollect: 1, _token: token },
+      timeout: { request: 15_000 }, retry: { limit: 0 },
+    })
+    return Array.isArray(data) ? data.find(d => d.name === '0.png' || d.name === '0.jpg') : undefined
   }
 }
 

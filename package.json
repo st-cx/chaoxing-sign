@@ -36,6 +36,10 @@
     "postinstall": "nuxi prepare && prisma generate",
     "migrate": "prisma migrate dev",
     "lint": "eslint .",
+    "test:ui": "vitest run --config tests/qr-code-sign.config.ts --maxWorkers=4 --minWorkers=1",
+    "demo": "vite --config preview/vite.config.mts",
+    "demo:build": "vite build --config preview/vite.config.mts",
+    "demo:start": "node scripts/preview-server.mjs",
     "release": "bumpp --commit --push --tag"
   },
   "dependencies": {
@@ -43,6 +47,7 @@
     "easemob-websdk": "^4.10.0",
     "http-proxy-agent": "7.0.2",
     "https-proxy-agent": "7.0.5",
+    "leaflet": "1.9.4",
     "next-auth": "~4.21.1",
     "tough-cookie": "^5.0.0"
   },
@@ -59,6 +64,7 @@
     "@sidebase/nuxt-auth": "^0.9.4",
     "@types/async": "^3.2.24",
     "@types/jsdom": "^21.1.7",
+    "@types/leaflet": "1.9.20",
     "@types/qrcode": "^1.5.5",
     "@types/tough-cookie": "^4.0.5",
     "@types/ws": "^8.5.13",

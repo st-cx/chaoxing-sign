@@ -17,6 +17,13 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     include: [
+      'tests/manual-sign.integration.ts',
+      'tests/activity-center.ui.ts',
+      'tests/location-editor.ui.ts',
+      'tests/map-search.test.ts',
+      'tests/location-library.test.ts',
+      'tests/location-settings.ui.ts',
+      'tests/account-interaction.store.ts',
       'tests/course-sync.store.ts',
       'tests/cx-session.test.ts',
       'tests/cx-session.ui.ts',

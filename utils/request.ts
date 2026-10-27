@@ -1,8 +1,6 @@
 import { createDiscreteApi } from 'naive-ui'
 
-const { message } = createDiscreteApi(
-  ['message'],
-)
+let message: ReturnType<typeof createDiscreteApi>['message'] | undefined
 
 export function getHeaders(defaultHeaders: HeadersInit = {}) {
   // ofetch normalizes request headers to a Headers instance before onRequest.
@@ -22,7 +20,13 @@ const _fetch = $fetch.create({
       && typeof useAccountStore !== 'undefined') {
       useAccountStore().applyAccountSession({ uid: state.uid, loginExpired: true, lastLoginTime: state.lastLoginTime })
     }
-    options?.params?.noMessage || message.error(response._data.message || '服务器错误')
+    if (!options?.params?.noMessage && typeof window !== 'undefined') {
+      try {
+        message ??= createDiscreteApi(['message']).message
+        message.error(response._data?.message || '服务器错误')
+      }
+      catch { console.warn('[request] 无法显示错误提示') }
+    }
   },
 })
 
