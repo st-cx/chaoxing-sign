@@ -186,3 +186,7 @@ html.dark .form-error { color: #ff9da6; }
   .batch-selection .n-checkbox { font-size: 12px; }
   .account-action-layout { grid-template-columns: 1fr; }
 }
+
+.map-setup-notice { padding: 16px; margin-bottom: 14px; border: 1px solid var(--workspace-border, #cbd5d1); border-radius: 12px; background: rgba(18, 133, 116, .07); }
+.map-setup-notice p { margin: 8px 0; line-height: 1.7; }
+.map-setup-notice a { color: var(--workspace-accent, #0c7668); text-decoration: underline; text-underline-offset: 3px; }

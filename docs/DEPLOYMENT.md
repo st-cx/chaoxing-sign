@@ -70,8 +70,8 @@ sign.example.com {
 
 ## 地图与照片配置
 
-- 地图选点使用 Leaflet / OpenStreetMap；地址搜索默认使用 Photon，无需密钥，公共服务不保证可用性。`MAP_PHOTON_ENDPOINT` 可指向自建服务。
-- `BAIDU_MAP_SERVER_AK` 用于位置签到的服务端地址解析；配置后搜索也优先使用百度。开通地理编码、全球逆地理编码，并配置服务端出口 IP 权限。
+- 国内默认百度地图：设置 `MAP_PROVIDER=baidu`，分别配置 `BAIDU_MAP_BROWSER_AK` 与 `BAIDU_MAP_SERVER_AK`，详见 [申请与配置指南](MAP_SETUP.md)。未配置时显示提示，不请求海外服务。
+- `BAIDU_MAP_SERVER_AK` 用于位置签到的服务端地址解析；搜索使用百度地点检索。开通地点检索、地理编码、全球逆地理编码，并配置服务端出口 IP 权限。
 - 手动拍照签到使用当前学习通账号的会话上传，无需配置公共云盘凭据，也不必提前上传 `0.jpg`。原自动签到照片查找能力另行保留。
 - HTTPS 是摄像头和定位权限正常工作的前提；手机系统相机的具体行为由浏览器决定。
 

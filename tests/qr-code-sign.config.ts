@@ -21,6 +21,8 @@ export default defineConfig({
       'tests/activity-center.ui.ts',
       'tests/location-editor.ui.ts',
       'tests/map-search.test.ts',
+      'tests/domestic-map.ui.ts',
+      'tests/baidu-map-loader.test.ts',
       'tests/location-library.test.ts',
       'tests/location-settings.ui.ts',
       'tests/account-interaction.store.ts',

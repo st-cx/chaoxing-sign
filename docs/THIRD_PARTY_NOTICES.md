@@ -64,7 +64,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## 地图服务
 
-- 地图数据与瓦片：© OpenStreetMap contributors，署名始终显示于地图。https://www.openstreetmap.org/copyright
+- 显式启用 MAP_PROVIDER=osm 时的地图数据与瓦片：© OpenStreetMap contributors，署名始终显示于地图。https://www.openstreetmap.org/copyright
 - 瓦片使用政策：https://operations.osmfoundation.org/policies/tiles/ 。仅交互加载，保留浏览器缓存，不下载离线地图，不预抓取。
-- 地址搜索：百度地理编码 V3，复用用户部署的 BAIDU_MAP_SERVER_AK。https://lbsyun.baidu.com/docs/webapi?title=geocoding%2Fguide%2Fwebservice-geocoding-base
-- 无百度 AK 时使用 Photon 公共搜索 API：https://github.com/komoot/photon 。仅用户点击搜索时请求，服务端限流并缓存，保留 OSM 来源说明。公共实例不保证可用性，高流量部署应自建并设置 MAP_PHOTON_ENDPOINT。未复制 Photon 源码，未接入公共 Nominatim 服务。
+- 国内默认地图：百度 JavaScript API 4.0，使用部署者自己的浏览器端 AK，保留 SDK 署名。https://lbs.baidu.com/docs/jsapi?title=jsapi4/guide/concepts/load
+- 国内默认地点搜索：百度地点检索 V2，使用部署者的服务端 AK。https://lbsyun.baidu.com/docs/webapi?title=placev3/guide/webservice-placeapiV3/interfaceDocumentV2
+- 仅 MAP_PROVIDER=osm 时使用 Photon 公共搜索 API：https://github.com/komoot/photon 。仅用户点击搜索时请求，服务端限流并缓存，保留 OSM 来源说明。公共实例不保证可用性，高流量部署应自建并设置 MAP_PHOTON_ENDPOINT。未复制 Photon 源码，未接入公共 Nominatim 服务。

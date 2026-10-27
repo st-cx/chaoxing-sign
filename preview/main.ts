@@ -55,6 +55,8 @@ Object.assign(globalThis, {
     }
     if (url.endsWith('/manual_sign'))
       return { code: 200, data: { result: options?.body?.photo ? '演示完成：已读取照片，未上传或执行真实签到' : '演示完成：未执行真实签到' } }
+    if (url === '/api/maps/config')
+      return { code: 200, data: { provider: 'baidu', browserAk: '', searchReady: false } }
     if (url === '/api/maps/geocode')
       return { code: 200, data: { provider: '示例搜索（未调用在线搜索接口）', places: [{ name: `示例地点：${options?.params?.address || '学校'}`, address: '示例数据，请勿用于实际位置', longitude: 113.092, latitude: 22.603, coordinateSystem: 'bd09' }] } }
     if (url.endsWith('/update_setting')) {
