@@ -1,5 +1,6 @@
-# 前端接口契约（当前实现）
+# 前端接口契约（历史基线与后续补充）
 
+> 本文保留早期架构或验收记录，不代表拍照与地图版的完整现状。新版功能、地点持久化和手动签到流程以 [新版说明](WORKSPACE_UPGRADE.md) 与 [第二轮设计](SECOND_ITERATION.md) 为准。
 基线：`1aacb32`，2026-09-15。下面是现有代码的契约，不是重新设计后的接口，也没有经过真实网络联调。源码路径可在 [JSON 目录](frontend-api.inventory.json) 查到。
 
 **二维码接口更新：**下文第 5 节的旧同步扫码描述及 JSON 目录仍是 2026-09-15 基线快照；当前扫码契约以本段为准。`POST /api/cx/accounts/:uid/sign_by_qrcode` 校验网站会话、账号归属及 URL 与提交字段的一致性，接收 `{uid,activityId,code,enc,url,courseId?}`。成功响应的 `data` 是 `{state,job}`；`state` 为 `accepted`（已入队）或 `busy`（同账号有排队中或执行中的任务）。任务结束立即释放账号占位；再次扫描同活动会创建新任务，不复用旧结果，也不要求确认。`job` 含任务 ID、学习通 uid、活动 ID、状态和脱敏消息，不含完整签到 URL 或 Cookie。POST 不等待最终结果。

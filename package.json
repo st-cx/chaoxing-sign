@@ -2,13 +2,15 @@
   "name": "chaoxing-sign",
   "version": "1.4.10",
   "footerConfig": {
-    "githubUrl": "https://github.com/TimePineapple/chaoxing-sign",
+    "githubUrl": "https://github.com/st-cx/chaoxing-sign",
     "buildText": "nuxt@3.14.1592",
     "authorName": "TimePineapple",
     "originalAuthorName": "Kuizuo",
     "authorUrl": "https://github.com/TimePineapple",
     "originalAuthorUrl": "https://kuizuo.cn"
   },
+  "description": "学习通签到工作台：拍照与扫码签到、地图选点、常用坐标库和多账号管理。",
+  "homepage": "https://github.com/st-cx/chaoxing-sign#readme",
   "private": true,
   "packageManager": "pnpm@9.15.9",
   "author": {
@@ -17,7 +19,7 @@
   },
   "license": "MIT",
   "repository": {
-    "url": "https://github.com/kuizuo/chaoxing-sign",
+    "url": "https://github.com/st-cx/chaoxing-sign",
     "type": "git"
   },
   "keywords": [
