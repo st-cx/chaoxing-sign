@@ -49,7 +49,8 @@ useHead({
       name: 'description', content: description,
     },
     {
-      name: 'referrer', content: 'no-referrer',
+      // Baidu's dynamically loaded scripts also need the site origin for AK validation.
+      name: 'referrer', content: 'strict-origin-when-cross-origin',
     },
   ],
 })
